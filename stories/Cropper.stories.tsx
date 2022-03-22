@@ -6,8 +6,8 @@ export default {
   component: Cropper,
 } as ComponentMeta<typeof Cropper>;
 
-const Template: ComponentStory<typeof Cropper> = (args) => (
-  <Cropper src={args.src} width={args.width} height={args.height} />
+const Template: ComponentStory<typeof Cropper> = ({ src, width, height, onCropComplete }) => (
+  <Cropper src={src} width={width} height={height} onCropComplete={onCropComplete}/>
 );
 
 export const Primary = Template.bind({});
