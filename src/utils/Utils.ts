@@ -23,6 +23,20 @@ export function restrictPosition(position: Point, cropSize: Size, imageSize: Siz
   };
 }
 
+export function getDistanceBetweenPoints(pointA: Point, pointB: Point) {
+  return Math.sqrt((pointA.y - pointB.y) * (pointA.y - pointB.y) + (pointA.x - pointB.x) * (pointA.x - pointB.x));
+}
+
+/**
+ * Return the point that is the center of point a and b
+ */
+export function getCenter(a: Point, b: Point): Point {
+  return {
+    x: (b.x + a.x) / 2,
+    y: (b.y + a.y) / 2,
+  };
+}
+
 /**
  * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  * @param {File} image - Image File url
@@ -31,6 +45,7 @@ export function restrictPosition(position: Point, cropSize: Size, imageSize: Siz
 export default function getCroppedImg(imageSrc: string, pixelCrop: Area): string {
   const image = new Image();
   image.src = imageSrc;
+  image.crossOrigin = 'Anonymous';
   const canvas = document.createElement('canvas');
   const WIDTH = 1200;
   const HEIGHT = 1200;

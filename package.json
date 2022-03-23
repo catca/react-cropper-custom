@@ -1,6 +1,6 @@
 {
   "name": "react-cropper-custom",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "react component test",
   "main": "dist/index.cjs.js",
   "module": "dist/index.esm.js",

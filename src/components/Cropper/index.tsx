@@ -1,5 +1,5 @@
 import { CropperProps, Point, Size } from '@src/types';
-import getCroppedImg, { restrictPosition, clamp } from '@utils/Utils';
+import getCroppedImg, { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
 import React, { FC, useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
@@ -17,12 +17,17 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
   const zoomRef = useRef<number>(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
+  const rafDragTimeout = useRef<null | number>();
+  const rafPinchTimeout = useRef<null | number>();
   const dragStartPosition = useRef<Point>({ x: 0, y: 0 });
+  const lastPinchDistance = useRef<number>(0);
 
   useEffect(() => {
     const img = new Image();
     img.addEventListener('load', () => {
-      if (img.width > img.height) {
+      const imgRatio = img.width / img.height;
+      const cropRatio = cropSize.width / cropSize.height;
+      if (imgRatio > cropRatio) {
         const tempRatio = img.height / cropSize.height;
         setImage({ width: img.width / tempRatio, height: cropSize.height });
         setRatio(tempRatio);
@@ -39,6 +44,11 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
   const getMousePoint = (e: MouseEvent | React.MouseEvent) => ({
     x: Number(e.clientX),
     y: Number(e.clientY),
+  });
+
+  const getTouchPoint = (touch: Touch | React.Touch) => ({
+    x: Number(touch.clientX),
+    y: Number(touch.clientY),
   });
 
   const emitCropData = () => {
@@ -75,6 +85,71 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
     dragStartPosition.current.y = e.clientY - crop.y;
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onDragStopped);
+  };
+
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onDragStopped);
+
+    if (e.touches.length === 2) {
+      onPinchStart(e);
+    } else if (e.touches.length === 1) {
+      onDragStart(getTouchPoint(e.touches[0]));
+    }
+  };
+
+  const onTouchMove = (e: TouchEvent) => {
+    // Prevent whole page from scrolling on iOS.
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      onPinchMove(e);
+    } else if (e.touches.length === 1) {
+      onDrag(getTouchPoint(e.touches[0]));
+    }
+  };
+
+  const onDragStart = ({ x, y }: Point) => {
+    dragStartPosition.current.x = x - crop.x;
+    dragStartPosition.current.y = y - crop.y;
+  };
+
+  const onDrag = ({ x, y }: Point) => {
+    if (rafDragTimeout.current) window.cancelAnimationFrame(rafDragTimeout.current);
+
+    rafDragTimeout.current = window.requestAnimationFrame(() => {
+      if (x === undefined || y === undefined) return;
+      const requestedPosition = {
+        x: x - dragStartPosition.current.x,
+        y: y - dragStartPosition.current.y,
+      };
+
+      const newPosition = restrictPosition(requestedPosition, cropSize, image, zoom);
+      setCrop(newPosition);
+      cropRef.current = newPosition;
+    });
+  };
+
+  const onPinchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    const pointA = getTouchPoint(e.touches[0]);
+    const pointB = getTouchPoint(e.touches[1]);
+    lastPinchDistance.current = getDistanceBetweenPoints(pointA, pointB);
+    onDragStart(getCenter(pointA, pointB));
+  };
+
+  const onPinchMove = (e: TouchEvent) => {
+    e.preventDefault();
+    const pointA = getTouchPoint(e.touches[0]);
+    const pointB = getTouchPoint(e.touches[1]);
+    const center = getCenter(pointA, pointB);
+    onDrag(center);
+
+    if (rafPinchTimeout.current) window.cancelAnimationFrame(rafPinchTimeout.current);
+    rafPinchTimeout.current = window.requestAnimationFrame(() => {
+      const distance = getDistanceBetweenPoints(pointA, pointB);
+      const newZoom = zoomRef.current * (distance / lastPinchDistance.current);
+      setNewZoom(newZoom, center);
+      lastPinchDistance.current = distance;
+    });
   };
 
   const cleanEvents = () => {
@@ -132,13 +207,14 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
     <div
       className="cropper-container"
       ref={containerRef}
+      onMouseDown={(e) => onMouseDown(e)}
+      onTouchStart={(e) => onTouchStart(e)}
       onWheel={(e) => onWheel(e)}
       style={{ width: `${cropSize.width}px`, height: `${cropSize.height}px` }}
     >
       <div
         className="cropper-image"
         ref={imageRef}
-        onMouseDown={(e) => onMouseDown(e)}
         style={{
           width: `${image.width}px`,
           height: `${image.height}px`,
