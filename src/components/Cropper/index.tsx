@@ -1,20 +1,28 @@
-import { CropperProps, Point, Size } from '@src/types';
-import getCroppedImg, { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
 import React, { FC, useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
+import { CropperProps, Point, Size } from '@src/types';
+import getCroppedImg, { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
 
-const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: CropperProps) => {
-  const cropSize = { width: width, height: height };
+const Cropper: FC<CropperProps> = ({
+  src,
+  width,
+  height,
+  zoom = 1,
+  onZoomChange = () => {},
+  onCropComplete,
+}: CropperProps) => {
+  const [cropSize, setCropSize] = useState<Size>({ width: width, height: height });
   const [image, setImage] = useState<Size>({ width: 0, height: 0 });
   const [ratio, setRatio] = useState<number>(1);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState<number>(1);
+  const [onEvent, setOnEvent] = useState<boolean>(false);
   const cropRef = useRef<Point>({ x: 0, y: 0 });
   const zoomRef = useRef<number>(1);
+  const imageSizeRef = useRef<Size>({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const rafDragTimeout = useRef<null | number>();
@@ -23,23 +31,72 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
   const lastPinchDistance = useRef<number>(0);
 
   useEffect(() => {
+    imgSizeInit();
+    return cleanEvents();
+  }, [src]);
+
+  useEffect(() => {
+    zoomRef.current = zoom;
+    window.addEventListener('resize', imgResize);
+    return () => {
+      // cleanup
+      window.removeEventListener('resize', imgResize);
+    };
+  }, []);
+
+  const imgSizeInit = () => {
     const img = new Image();
     img.addEventListener('load', () => {
+      imageSizeRef.current.width = img.width;
+      imageSizeRef.current.height = img.height;
       const imgRatio = img.width / img.height;
-      const cropRatio = cropSize.width / cropSize.height;
+      let cropWidth = cropSize.width;
+      let cropHeight = cropSize.height;
+      if (width === 0 && height === 0) {
+        cropWidth = containerRef.current!.offsetWidth;
+        cropHeight = containerRef.current!.offsetHeight;
+        setCropSize({ width: cropWidth, height: cropHeight });
+      }
+      const cropRatio = cropWidth / cropHeight;
       if (imgRatio > cropRatio) {
-        const tempRatio = img.height / cropSize.height;
-        setImage({ width: img.width / tempRatio, height: cropSize.height });
+        const tempRatio = img.height / cropHeight;
+        setImage({ width: img.width / tempRatio, height: cropHeight });
         setRatio(tempRatio);
       } else {
-        const tempRatio = img.width / cropSize.width;
-        setImage({ width: cropSize.width, height: img.height / tempRatio });
+        const tempRatio = img.width / cropWidth;
+        setImage({ width: cropWidth, height: img.height / tempRatio });
         setRatio(tempRatio);
       }
     });
     img.src = src;
-    return cleanEvents();
-  }, [src]);
+  };
+
+  const imgResize = () => {
+    if (width === 0 && height === 0) {
+      cropInit();
+      const imgRatio = imageSizeRef.current.width / imageSizeRef.current.height;
+      const cropWidth = containerRef.current!.offsetWidth;
+      const cropHeight = containerRef.current!.offsetHeight;
+      const cropRatio = cropWidth / cropHeight;
+      setCropSize({ width: cropWidth, height: cropHeight });
+      if (imgRatio > cropRatio) {
+        const tempRatio = imageSizeRef.current.height / cropHeight;
+        setImage({ width: imageSizeRef.current.width / tempRatio, height: cropHeight });
+        setRatio(tempRatio);
+      } else {
+        const tempRatio = imageSizeRef.current.width / cropWidth;
+        setImage({ width: cropWidth, height: imageSizeRef.current.height / tempRatio });
+        setRatio(tempRatio);
+      }
+    }
+  };
+
+  const cropInit = () => {
+    cropRef.current.x = 0;
+    cropRef.current.y = 0;
+    zoomRef.current = 1;
+    setCrop({ ...crop, x: 0, y: 0 });
+  };
 
   const getMousePoint = (e: MouseEvent | React.MouseEvent) => ({
     x: Number(e.clientX),
@@ -50,6 +107,37 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
     x: Number(touch.clientX),
     y: Number(touch.clientY),
   });
+
+  const getPointOnContainer = ({ x, y }: Point) => {
+    if (containerRef.current) {
+      return {
+        x: containerRef.current.offsetWidth / 2 - (x - containerRef.current.offsetLeft),
+        y: containerRef.current.offsetHeight / 2 - (y - containerRef.current.offsetTop),
+      };
+    }
+    return {
+      x: 0,
+      y: 0,
+    };
+  };
+
+  const getPointOnMedia = ({ x, y }: Point) => ({
+    x: (x + crop.x) / zoomRef.current,
+    y: (y + crop.y) / zoomRef.current,
+  });
+
+  const cleanEvents = () => {
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onDragStopped);
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onDragStopped);
+  };
+
+  const onDragStopped = () => {
+    cleanEvents();
+    emitCropData();
+    setOnEvent(false);
+  };
 
   const emitCropData = () => {
     const cropX =
@@ -69,22 +157,46 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
     onCropComplete(emitCropSize, croppedImage);
   };
 
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.preventDefault();
+    setOnEvent(true);
+    dragStartPosition.current.x = e.clientX - crop.x;
+    dragStartPosition.current.y = e.clientY - crop.y;
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onDragStopped);
+  };
+
   const onMouseMove = (e: MouseEvent) => {
     const requestedPosition = {
       x: e.clientX - dragStartPosition.current.x,
       y: e.clientY - dragStartPosition.current.y,
     };
-    const newPosition = restrictPosition(requestedPosition, cropSize, image, zoom);
+    const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
     setCrop(newPosition);
     cropRef.current = newPosition;
   };
 
-  const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.preventDefault();
-    dragStartPosition.current.x = e.clientX - crop.x;
-    dragStartPosition.current.y = e.clientY - crop.y;
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onDragStopped);
+  const setNewZoom = (zoom: number, point: Point) => {
+    const zoomPoint = getPointOnContainer(point);
+    const zoomTarget = getPointOnMedia(zoomPoint);
+    const newZoom = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+    const requestedPosition = {
+      x: zoomTarget.x * newZoom - zoomPoint.x,
+      y: zoomTarget.y * newZoom - zoomPoint.y,
+    };
+    const newPosition = restrictPosition(requestedPosition, cropSize, image, newZoom);
+    setCrop(newPosition);
+    onZoomChange(newZoom);
+    zoomRef.current = newZoom;
+    cropRef.current = newPosition;
+  };
+
+  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const point = getMousePoint(e);
+    const { pixelY } = normalizeWheel(e);
+    const newZoom = zoomRef.current - pixelY / 200;
+    setNewZoom(newZoom, point);
+    emitCropData();
   };
 
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
@@ -101,6 +213,7 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
   const onTouchMove = (e: TouchEvent) => {
     // Prevent whole page from scrolling on iOS.
     e.preventDefault();
+    setOnEvent(true);
     if (e.touches.length === 2) {
       onPinchMove(e);
     } else if (e.touches.length === 1) {
@@ -123,7 +236,7 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
         y: y - dragStartPosition.current.y,
       };
 
-      const newPosition = restrictPosition(requestedPosition, cropSize, image, zoom);
+      const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
       setCrop(newPosition);
       cropRef.current = newPosition;
     });
@@ -152,57 +265,6 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
     });
   };
 
-  const cleanEvents = () => {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onDragStopped);
-  };
-
-  const onDragStopped = () => {
-    cleanEvents();
-    emitCropData();
-  };
-
-  const getPointOnContainer = ({ x, y }: Point) => {
-    if (containerRef.current) {
-      return {
-        x: containerRef.current.offsetWidth / 2 - (x - containerRef.current.offsetLeft),
-        y: containerRef.current.offsetHeight / 2 - (y - containerRef.current.offsetTop),
-      };
-    }
-    return {
-      x: 0,
-      y: 0,
-    };
-  };
-
-  const getPointOnMedia = ({ x, y }: Point) => ({
-    x: (x + crop.x) / zoom,
-    y: (y + crop.y) / zoom,
-  });
-
-  const setNewZoom = (zoom: number, point: Point) => {
-    const zoomPoint = getPointOnContainer(point);
-    const zoomTarget = getPointOnMedia(zoomPoint);
-    const newZoom = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
-    const requestedPosition = {
-      x: zoomTarget.x * newZoom - zoomPoint.x,
-      y: zoomTarget.y * newZoom - zoomPoint.y,
-    };
-    const newPosition = restrictPosition(requestedPosition, cropSize, image, newZoom);
-    setZoom(newZoom);
-    setCrop(newPosition);
-    zoomRef.current = newZoom;
-    cropRef.current = newPosition;
-  };
-
-  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    const point = getMousePoint(e);
-    const { pixelY } = normalizeWheel(e);
-    const newZoom = zoom - pixelY / 200;
-    setNewZoom(newZoom, point);
-    emitCropData();
-  };
-
   return (
     <div
       className="cropper-container"
@@ -210,7 +272,11 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
       onMouseDown={(e) => onMouseDown(e)}
       onTouchStart={(e) => onTouchStart(e)}
       onWheel={(e) => onWheel(e)}
-      style={{ width: `${cropSize.width}px`, height: `${cropSize.height}px` }}
+      style={{
+        width: `${cropSize.width === 0 ? '100%' : `${cropSize.width}px`}`,
+        height: `${cropSize.height === 0 ? '100%' : `${cropSize.height}px`}`,
+        cursor: `${onEvent ? 'grabbing' : 'grab'}`,
+      }}
     >
       <div
         className="cropper-image"
@@ -219,10 +285,10 @@ const Cropper: FC<CropperProps> = ({ src, width, height, onCropComplete }: Cropp
           width: `${image.width}px`,
           height: `${image.height}px`,
           backgroundImage: `url(${src})`,
-          transform: `translate(${crop.x}px, ${crop.y}px) scale(${zoom})`,
+          transform: `translate(${crop.x}px, ${crop.y}px) scale(${zoomRef.current})`,
         }}
       />
-      <div className="cropper-area" />
+      <div className="cropper-area" style={{ display: `${onEvent ? 'block' : 'none'}` }} />
     </div>
   );
 };

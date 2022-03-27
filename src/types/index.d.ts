@@ -24,5 +24,7 @@ export interface CropperProps {
   src: string;
   width: number;
   height: number;
+  zoom?: number;
+  onZoomChange?: (zoom: number) => void;
   onCropComplete: (croppedArea: Area, croppedImg: string) => void;
 }
