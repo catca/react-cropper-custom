@@ -45,7 +45,6 @@ export function getCenter(a: Point, b: Point): Point {
 export default function getCroppedImg(imageSrc: string, pixelCrop: Area): string {
   const image = new Image();
   image.src = imageSrc;
-  image.crossOrigin = 'Anonymous';
   const canvas = document.createElement('canvas');
   const WIDTH = 1200;
   const HEIGHT = 1200;
