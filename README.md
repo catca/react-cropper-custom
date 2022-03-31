@@ -53,8 +53,8 @@ const Demo = () => {
 ## Props
 
 | Prop                                    | Type         | Required | Description                                                                                                                                     |
-| :-------------------------------------- | :----------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `src`                                   | string       |    ✔     | The image to be cropped. `src` is required.                                                                                                     | cropper. |
+| :-------------------------------------- | :----------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src`                                   | string       |    ✔     | The image to be cropped. `src` is required.                                                                                                     |
 | `zoom`                                  | number       |    ✔     | Zoom of the media between `minZoom` and `maxZoom`. Defaults to 1.                                                                               |
 | `width`                                 | number       |    ✔     | Size of the crop area (in pixels).                                                                                                              |
 | `height`                                | number       |    ✔     | Size of the crop area (in pixels).                                                                                                              |
