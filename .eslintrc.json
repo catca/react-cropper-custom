@@ -50,6 +50,7 @@
         "devDependencies": ["./src/test/setupTests.ts", "**/*.test.tsx", "**/*.test.ts", "**/*.stories.tsx"]
       }
     ],
+    "no-restricted-properties": "off",
     "no-underscore-dangle": "off",
     "no-undef": "off",
     "object-shorthand": "off",

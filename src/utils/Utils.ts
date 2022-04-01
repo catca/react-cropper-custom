@@ -23,6 +23,23 @@ export function restrictPosition(position: Point, cropSize: Size, imageSize: Siz
   };
 }
 
+function flexiblePositionCoord(position: number, imageSize: number, mediaSize: number, zoom: number): number {
+  const maxPosition = (mediaSize * zoom) / 2 - imageSize / 2;
+  if (position > maxPosition) return maxPosition + Math.pow(position - maxPosition, 0.7);
+  if (position < -maxPosition) return -maxPosition - Math.pow(-(position + maxPosition), 0.7);
+  return position;
+}
+
+/**
+ * Ensure a new flexible position stays in the crop area.
+ */
+export function flexiblePosition(position: Point, cropSize: Size, imageSize: Size, zoom: number): Point {
+  return {
+    x: flexiblePositionCoord(position.x, cropSize.width, imageSize.width, zoom),
+    y: flexiblePositionCoord(position.y, cropSize.height, imageSize.height, zoom),
+  };
+}
+
 export function getDistanceBetweenPoints(pointA: Point, pointB: Point) {
   return Math.sqrt((pointA.y - pointB.y) * (pointA.y - pointB.y) + (pointA.x - pointB.x) * (pointA.x - pointB.x));
 }

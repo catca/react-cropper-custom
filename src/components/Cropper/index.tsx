@@ -2,7 +2,7 @@ import React, { FC, useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
 import { CropperProps, Point, Size } from '@src/types';
-import { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
+import { restrictPosition, clamp, getDistanceBetweenPoints, getCenter, flexiblePosition } from '@utils/Utils';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -137,6 +137,7 @@ const Cropper: FC<CropperProps> = ({
     cleanEvents();
     emitCropData();
     setOnEvent(false);
+    setCrop(cropRef.current);
   };
 
   const emitCropData = () => {
@@ -171,7 +172,8 @@ const Cropper: FC<CropperProps> = ({
       y: e.clientY - dragStartPosition.current.y,
     };
     const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
-    setCrop(newPosition);
+    const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, image, zoomRef.current);
+    setCrop(newFlexiblePosition);
     cropRef.current = newPosition;
   };
 
@@ -211,7 +213,7 @@ const Cropper: FC<CropperProps> = ({
 
   const onTouchMove = (e: TouchEvent) => {
     // Prevent whole page from scrolling on iOS.
-    e.preventDefault();
+    if (e.cancelable) e.preventDefault();
     setOnEvent(true);
     if (e.touches.length === 2) {
       onPinchMove(e);
@@ -236,7 +238,8 @@ const Cropper: FC<CropperProps> = ({
       };
 
       const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
-      setCrop(newPosition);
+      const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, image, zoomRef.current);
+      setCrop(newFlexiblePosition);
       cropRef.current = newPosition;
     });
   };
@@ -285,6 +288,7 @@ const Cropper: FC<CropperProps> = ({
           height: `${image.height}px`,
           backgroundImage: `url(${src})`,
           transform: `translate(${crop.x}px, ${crop.y}px) scale(${zoomRef.current})`,
+          transition: `transform ${onEvent ? '0' : '0.2'}s`,
         }}
       />
       <div className="cropper-area" style={{ display: `${onEvent ? 'block' : 'none'}` }} />

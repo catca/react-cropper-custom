@@ -28,7 +28,7 @@ npm install react-cropper-custom --save
 ## Basic usage
 
 ```js
-import Cropper from 'react-cropper-custom';
+import { Cropper } from 'react-cropper-custom';
 
 const Demo = () => {
   const [zoom, setZoom] = useState(1);
@@ -63,7 +63,7 @@ const Demo = () => {
 
 #### onCropComplete(croppedArea)
 
-This callback is the one you should use to save the cropped area of the media. It's passed 2 arguments:
+This callback is the one you should use to save the cropped area of the media. It's passed 1 arguments:
 
 1. `croppedArea`: coordinates and dimensions of the cropped area in percentage of the media dimension
 
