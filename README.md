@@ -1,6 +1,6 @@
 # react-cropper-custom
 
-A React component to crop images with easy interactions
+A React component to crop images with interactions
 
 ## Demo
 
@@ -16,25 +16,25 @@ Check out the examples:
 ## Installation
 
 ```shell
-yarn add react-easy-crop
+yarn add react-cropper-custom
 ```
 
 or
 
 ```shell
-npm install react-easy-crop --save
+npm install react-cropper-custom --save
 ```
 
 ## Basic usage
 
 ```js
-import Cropper from 'react-easy-crop';
+import Cropper from 'react-cropper-custom';
 
 const Demo = () => {
   const [zoom, setZoom] = useState(1);
 
-  const onCropComplete = useCallback((croppedArea, croppedImage) => {
-    console.log(croppedArea, croppedImage);
+  const onCropComplete = useCallback((croppedArea) => {
+    console.log(croppedArea);
   }, []);
 
   return (
@@ -55,18 +55,17 @@ const Demo = () => {
 | Prop                                    | Type         | Required | Description                                                                                                                                     |
 | :-------------------------------------- | :----------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src`                                   | string       |    ✔     | The image to be cropped. `src` is required.                                                                                                     |
-| `zoom`                                  | number       |    ✔     | Zoom of the media between `minZoom` and `maxZoom`. Defaults to 1.                                                                               |
+| `zoom`                                  | number       |          | Zoom of the media between `minZoom` and `maxZoom`. Defaults to 1.                                                                               |
 | `width`                                 | number       |    ✔     | Size of the crop area (in pixels).                                                                                                              |
 | `height`                                | number       |    ✔     | Size of the crop area (in pixels).                                                                                                              |
 | `onZoomChange`                          | zoom => void |          | Called everytime the zoom is changed. Use it to update your `zoom` state.                                                                       |
-| [`onCropComplete`](#onCropCompleteProp) | Function     |          | Called when the user stops moving the media or stops zooming. It will be passed the corresponding cropped area on the media in pixels and image |
+| [`onCropComplete`](#onCropCompleteProp) | Function     |    ✔     | Called when the user stops moving the media or stops zooming. It will be passed the corresponding cropped area on the media in pixels and image |
 
-#### onCropComplete(croppedArea, croppedImg)
+#### onCropComplete(croppedArea)
 
 This callback is the one you should use to save the cropped area of the media. It's passed 2 arguments:
 
 1. `croppedArea`: coordinates and dimensions of the cropped area in percentage of the media dimension
-2. `croppedImg`: Cropped image based on cropArea(base64).
 
 croppedArea argument have the following shape:
 

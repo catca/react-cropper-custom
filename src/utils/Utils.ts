@@ -37,14 +37,22 @@ export function getCenter(a: Point, b: Point): Point {
   };
 }
 
+export const createImage = (url: string) =>
+  new Promise((resolve, reject) => {
+    const image = new Image();
+    image.addEventListener('load', () => resolve(image));
+    image.addEventListener('error', (error) => reject(error));
+    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues on CodeSandbox
+    image.src = url;
+  });
+
 /**
  * This function was adapted from the one in the ReadMe of https://github.com/DominicTobias/react-image-crop
  * @param {File} image - Image File url
- * @param {Object} pixelCrop - pixelCrop Object provided by react-easy-crop
+ * @param {Object} pixelCrop - pixelCrop Object
  */
-export default function getCroppedImg(imageSrc: string, pixelCrop: Area): string {
-  const image = new Image();
-  image.src = imageSrc;
+export default async function getCroppedImg(imageSrc: string, pixelCrop: Area) {
+  const image: any = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const WIDTH = 1200;
   const HEIGHT = 1200;

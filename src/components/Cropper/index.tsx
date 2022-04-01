@@ -2,7 +2,7 @@ import React, { FC, useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
 import { CropperProps, Point, Size } from '@src/types';
-import getCroppedImg, { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
+import { restrictPosition, clamp, getDistanceBetweenPoints, getCenter } from '@utils/Utils';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -153,8 +153,7 @@ const Cropper: FC<CropperProps> = ({
       height: cropHeight,
     };
 
-    const croppedImage = getCroppedImg(src, emitCropSize);
-    onCropComplete(emitCropSize, croppedImage);
+    onCropComplete(emitCropSize);
   };
 
   const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
