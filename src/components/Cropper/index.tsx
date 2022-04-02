@@ -1,8 +1,15 @@
 import React, { FC, useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
-import { CropperProps, Point, Size } from '@src/types';
-import { restrictPosition, clamp, getDistanceBetweenPoints, getCenter, flexiblePosition } from '@utils/Utils';
+import { CropperProps, Size, Point } from '@src/types';
+import {
+  getInitialCropFromCroppedAreaPixels,
+  restrictPosition,
+  flexiblePosition,
+  clamp,
+  getDistanceBetweenPoints,
+  getCenter,
+} from '@utils/Utils';
 
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 3;
@@ -14,12 +21,14 @@ const Cropper: FC<CropperProps> = ({
   zoom = 1,
   onZoomChange = () => {},
   onCropComplete,
+  initialCroppedArea,
 }: CropperProps) => {
   const [cropSize, setCropSize] = useState<Size>({ width: width, height: height });
-  const [image, setImage] = useState<Size>({ width: 0, height: 0 });
+  const [imageSize, setImageSize] = useState<Size>({ width: 0, height: 0 });
   const [ratio, setRatio] = useState<number>(1);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [onEvent, setOnEvent] = useState<boolean>(false);
+  const [completeInitial, setCompleteInitial] = useState<boolean>(false);
   const cropRef = useRef<Point>({ x: 0, y: 0 });
   const zoomRef = useRef<number>(1);
   const imageSizeRef = useRef<Size>({ width: 0, height: 0 });
@@ -52,6 +61,8 @@ const Cropper: FC<CropperProps> = ({
       const imgRatio = img.width / img.height;
       let cropWidth = cropSize.width;
       let cropHeight = cropSize.height;
+      let tempRatio;
+      let tempImageSize: Size;
       if (width === 0 && height === 0) {
         cropWidth = containerRef.current!.offsetWidth;
         cropHeight = containerRef.current!.offsetHeight;
@@ -59,14 +70,17 @@ const Cropper: FC<CropperProps> = ({
       }
       const cropRatio = cropWidth / cropHeight;
       if (imgRatio > cropRatio) {
-        const tempRatio = img.height / cropHeight;
-        setImage({ width: img.width / tempRatio, height: cropHeight });
+        tempRatio = img.height / cropHeight;
+        tempImageSize = { width: img.width / tempRatio, height: cropHeight };
+        setImageSize(tempImageSize);
         setRatio(tempRatio);
       } else {
-        const tempRatio = img.width / cropWidth;
-        setImage({ width: cropWidth, height: img.height / tempRatio });
+        tempRatio = img.width / cropWidth;
+        tempImageSize = { width: cropWidth, height: img.height / tempRatio };
+        setImageSize(tempImageSize);
         setRatio(tempRatio);
       }
+      initialCroppedAreaFunction(tempImageSize, tempRatio);
     });
     img.src = src;
   };
@@ -81,21 +95,35 @@ const Cropper: FC<CropperProps> = ({
       setCropSize({ width: cropWidth, height: cropHeight });
       if (imgRatio > cropRatio) {
         const tempRatio = imageSizeRef.current.height / cropHeight;
-        setImage({ width: imageSizeRef.current.width / tempRatio, height: cropHeight });
+        setImageSize({ width: imageSizeRef.current.width / tempRatio, height: cropHeight });
         setRatio(tempRatio);
       } else {
         const tempRatio = imageSizeRef.current.width / cropWidth;
-        setImage({ width: cropWidth, height: imageSizeRef.current.height / tempRatio });
+        setImageSize({ width: cropWidth, height: imageSizeRef.current.height / tempRatio });
         setRatio(tempRatio);
       }
     }
+  };
+
+  const initialCroppedAreaFunction = (tempImageSize: Size, tempRatio: number) => {
+    setCompleteInitial(true);
+    if (initialCroppedArea === undefined) return;
+    const { initialCrop, initialZoom } = getInitialCropFromCroppedAreaPixels(
+      initialCroppedArea,
+      cropSize,
+      tempImageSize,
+      tempRatio,
+    );
+    zoomRef.current = initialZoom;
+    cropRef.current = initialCrop;
+    setCrop(() => cropRef.current);
   };
 
   const cropInit = () => {
     cropRef.current.x = 0;
     cropRef.current.y = 0;
     zoomRef.current = 1;
-    setCrop({ ...crop, x: 0, y: 0 });
+    setCrop((crop: Point) => ({ ...crop, x: 0, y: 0 }));
   };
 
   const getMousePoint = (e: MouseEvent | React.MouseEvent) => ({
@@ -137,14 +165,14 @@ const Cropper: FC<CropperProps> = ({
     cleanEvents();
     emitCropData();
     setOnEvent(false);
-    setCrop(cropRef.current);
+    setCrop(() => cropRef.current);
   };
 
   const emitCropData = () => {
     const cropX =
-      (((image.width * zoomRef.current - cropSize.width) / 2 - cropRef.current.x) * ratio) / zoomRef.current;
+      (((imageSize.width * zoomRef.current - cropSize.width) / 2 - cropRef.current.x) * ratio) / zoomRef.current;
     const cropY =
-      (((image.height * zoomRef.current - cropSize.height) / 2 - cropRef.current.y) * ratio) / zoomRef.current;
+      (((imageSize.height * zoomRef.current - cropSize.height) / 2 - cropRef.current.y) * ratio) / zoomRef.current;
     const cropWidth = (cropSize.width * ratio) / zoomRef.current;
     const cropHeight = (cropSize.height * ratio) / zoomRef.current;
     const emitCropSize = {
@@ -153,7 +181,6 @@ const Cropper: FC<CropperProps> = ({
       width: cropWidth,
       height: cropHeight,
     };
-
     onCropComplete(emitCropSize);
   };
 
@@ -171,8 +198,8 @@ const Cropper: FC<CropperProps> = ({
       x: e.clientX - dragStartPosition.current.x,
       y: e.clientY - dragStartPosition.current.y,
     };
-    const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
-    const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, image, zoomRef.current);
+    const newPosition = restrictPosition(requestedPosition, cropSize, imageSize, zoomRef.current);
+    const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, imageSize, zoomRef.current);
     setCrop(newFlexiblePosition);
     cropRef.current = newPosition;
   };
@@ -185,7 +212,7 @@ const Cropper: FC<CropperProps> = ({
       x: zoomTarget.x * newZoom - zoomPoint.x,
       y: zoomTarget.y * newZoom - zoomPoint.y,
     };
-    const newPosition = restrictPosition(requestedPosition, cropSize, image, newZoom);
+    const newPosition = restrictPosition(requestedPosition, cropSize, imageSize, newZoom);
     setCrop(newPosition);
     onZoomChange(newZoom);
     zoomRef.current = newZoom;
@@ -237,8 +264,8 @@ const Cropper: FC<CropperProps> = ({
         y: y - dragStartPosition.current.y,
       };
 
-      const newPosition = restrictPosition(requestedPosition, cropSize, image, zoomRef.current);
-      const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, image, zoomRef.current);
+      const newPosition = restrictPosition(requestedPosition, cropSize, imageSize, zoomRef.current);
+      const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, imageSize, zoomRef.current);
       setCrop(newFlexiblePosition);
       cropRef.current = newPosition;
     });
@@ -284,11 +311,12 @@ const Cropper: FC<CropperProps> = ({
         className="cropper-image"
         ref={imageRef}
         style={{
-          width: `${image.width}px`,
-          height: `${image.height}px`,
+          width: `${imageSize.width}px`,
+          height: `${imageSize.height}px`,
           backgroundImage: `url(${src})`,
           transform: `translate(${crop.x}px, ${crop.y}px) scale(${zoomRef.current})`,
-          transition: `transform ${onEvent ? '0' : '0.2'}s`,
+          transition: `transform ${onEvent ? '0' : completeInitial ? '0' : '0.2'}s`,
+          opacity: `${completeInitial ? '1' : '0'}`,
         }}
       />
       <div className="cropper-area" style={{ display: `${onEvent ? 'block' : 'none'}` }} />

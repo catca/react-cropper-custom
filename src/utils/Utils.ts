@@ -1,4 +1,4 @@
-import { Point, Size, Area } from '@src/types';
+import { Area, Point, Size } from '@src/types';
 
 /**
  * Clamp value between min and max
@@ -52,6 +52,24 @@ export function getCenter(a: Point, b: Point): Point {
     x: (b.x + a.x) / 2,
     y: (b.y + a.y) / 2,
   };
+}
+
+/**
+ * Compute crop and zoom from the croppedAreaPixels
+ */
+export function getInitialCropFromCroppedAreaPixels(
+  initialCroppedArea: Area,
+  cropSize: Size,
+  imageSize: Size,
+  ratio: number,
+): { initialCrop: Point; initialZoom: number } {
+  const initialZoom = (cropSize.width * ratio) / initialCroppedArea.width;
+  let initialCrop = {
+    x: (imageSize.width * initialZoom - cropSize.width) / 2 - (initialZoom * initialCroppedArea.x) / ratio,
+    y: (imageSize.height * initialZoom - cropSize.height) / 2 - (initialZoom * initialCroppedArea.y) / ratio,
+  };
+  initialCrop = restrictPosition(initialCrop, cropSize, imageSize, initialZoom);
+  return { initialCrop, initialZoom };
 }
 
 export const createImage = (url: string) =>
