@@ -11,14 +11,13 @@ import {
   getCenter,
 } from '@utils/Utils';
 
-const MIN_ZOOM = 1;
-const MAX_ZOOM = 3;
-
 const Cropper: FC<CropperProps> = ({
   src,
   width,
   height,
   zoom = 1,
+  minZoom = 1,
+  maxZoom = 3,
   onZoomChange = () => {},
   onCropComplete,
   initialCroppedArea,
@@ -40,18 +39,27 @@ const Cropper: FC<CropperProps> = ({
   const lastPinchDistance = useRef<number>(0);
 
   useEffect(() => {
-    imgSizeInit();
-    return cleanEvents();
-  }, [src]);
-
-  useEffect(() => {
-    zoomRef.current = zoom;
     window.addEventListener('resize', imgResize);
     return () => {
       // cleanup
       window.removeEventListener('resize', imgResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (imageSize.width === 0 || imageSize.height === 0) return;
+    const point = {
+      x: cropSize.width / 2,
+      y: cropSize.height / 2,
+    };
+    setNewZoom(zoom, point);
+    emitCropData();
+  }, [zoom]);
+
+  useEffect(() => {
+    imgSizeInit();
+    return cleanEvents();
+  }, [src]);
 
   const imgSizeInit = () => {
     const img = new Image();
@@ -207,7 +215,7 @@ const Cropper: FC<CropperProps> = ({
   const setNewZoom = (zoom: number, point: Point) => {
     const zoomPoint = getPointOnContainer(point);
     const zoomTarget = getPointOnMedia(zoomPoint);
-    const newZoom = clamp(zoom, MIN_ZOOM, MAX_ZOOM);
+    const newZoom = clamp(zoom, minZoom, maxZoom);
     const requestedPosition = {
       x: zoomTarget.x * newZoom - zoomPoint.x,
       y: zoomTarget.y * newZoom - zoomPoint.y,
