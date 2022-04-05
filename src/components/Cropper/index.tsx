@@ -13,8 +13,9 @@ import {
 
 const Cropper: FC<CropperProps> = ({
   src,
-  width,
-  height,
+  width = 0,
+  height = 0,
+  aspect = 1,
   zoom = 1,
   minZoom = 1,
   maxZoom = 3,
@@ -39,14 +40,6 @@ const Cropper: FC<CropperProps> = ({
   const lastPinchDistance = useRef<number>(0);
 
   useEffect(() => {
-    window.addEventListener('resize', imgResize);
-    return () => {
-      // cleanup
-      window.removeEventListener('resize', imgResize);
-    };
-  }, []);
-
-  useEffect(() => {
     if (imageSize.width === 0 || imageSize.height === 0) return;
     const point = {
       x: cropSize.width / 2,
@@ -61,6 +54,14 @@ const Cropper: FC<CropperProps> = ({
     return cleanEvents();
   }, [src]);
 
+  useEffect(() => {
+    window.addEventListener('resize', imgResize);
+    imgResize();
+    return () => {
+      window.removeEventListener('resize', imgResize);
+    };
+  }, [aspect]);
+
   const imgSizeInit = () => {
     const img = new Image();
     img.addEventListener('load', () => {
@@ -73,7 +74,7 @@ const Cropper: FC<CropperProps> = ({
       let tempImageSize: Size;
       if (width === 0 && height === 0) {
         cropWidth = containerRef.current!.offsetWidth;
-        cropHeight = containerRef.current!.offsetHeight;
+        cropHeight = cropWidth * aspect;
         setCropSize({ width: cropWidth, height: cropHeight });
       }
       const cropRatio = cropWidth / cropHeight;
@@ -98,7 +99,7 @@ const Cropper: FC<CropperProps> = ({
       cropInit();
       const imgRatio = imageSizeRef.current.width / imageSizeRef.current.height;
       const cropWidth = containerRef.current!.offsetWidth;
-      const cropHeight = containerRef.current!.offsetHeight;
+      const cropHeight = cropWidth * aspect;
       const cropRatio = cropWidth / cropHeight;
       setCropSize({ width: cropWidth, height: cropHeight });
       if (imgRatio > cropRatio) {
@@ -310,7 +311,7 @@ const Cropper: FC<CropperProps> = ({
       onTouchStart={(e) => onTouchStart(e)}
       onWheel={(e) => onWheel(e)}
       style={{
-        width: `${cropSize.width === 0 ? '100%' : `${cropSize.width}px`}`,
+        width: `${width === 0 ? (aspect > 1 ? `${100 / aspect}%` : '100%') : `${cropSize.width}px`}`,
         height: `${cropSize.height === 0 ? '100%' : `${cropSize.height}px`}`,
         cursor: `${onEvent ? 'grabbing' : 'grab'}`,
       }}

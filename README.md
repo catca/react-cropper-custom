@@ -1,6 +1,6 @@
 # react-cropper-custom
 
-A React component to crop images with interactions
+A React component to crop images with interactions.
 
 <img alt="cropper" src="./public/cropper.gif" width="340" height="340"/>
 
@@ -12,7 +12,7 @@ Check out the examples:
 
 ## Features
 
-- Supports drag, zoom interactions
+- Supports drag, zoom interactions.
 - The image is automatically enlarged to fit the area.
 
 ## Installation
@@ -57,9 +57,12 @@ const Demo = () => {
 | Prop                                    | Type                                                  | Required | Description                                                                                                                                                                                     |
 | :-------------------------------------- | :---------------------------------------------------- | :------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `src`                                   | string                                                |    ✔     | The image to be cropped. `src` is required.                                                                                                                                                     |
+| `width`                                 | number                                                |          | Size of the crop area (in pixels). Defaults to 0. If the width and height values are 0, the crop area is responsive. It also follows the proportions of aspect props.                           |
+| `height`                                | number                                                |          | Size of the crop area (in pixels). Defaults to 0. If the width and height values are 0, the crop area is responsive. It also follows the proportions of aspect props.                           |
+| `aspect`                                | number                                                |          | Aspect of the crop area (height / width). Defaults to 1.                                                                                                                                        |
 | `zoom`                                  | number                                                |          | Zoom of the media between `minZoom` and `maxZoom`. Defaults to 1.                                                                                                                               |
-| `width`                                 | number                                                |    ✔     | Size of the crop area (in pixels).                                                                                                                                                              |
-| `height`                                | number                                                |    ✔     | Size of the crop area (in pixels).                                                                                                                                                              |
+| `minZoom`                               | number                                                |          | Minimum zoom of the media. Defaults to 1.                                                                                                                                                       |
+| `maxZoom`                               | number                                                |          | Maximum zoom of the media. Defaults to 3.                                                                                                                                                       |
 | `onZoomChange`                          | zoom => void                                          |          | Called everytime the zoom is changed. Use it to update your `zoom` state.                                                                                                                       |
 | `initialCroppedArea`                    | {x: number, y: number, width: number, height: number} |          | Use this to set the initial crop position/zoom of the cropper (for example, when editing a previously cropped media). The value should be the same as the croppedArea passed to onCropComplete. |
 | [`onCropComplete`](#onCropCompleteProp) | Function                                              |    ✔     | Called when the user stops moving the media or stops zooming. It will be passed the corresponding cropped area on the media in pixels and image.                                                |
@@ -68,7 +71,7 @@ const Demo = () => {
 
 This callback is the one you should use to save the cropped area of the media. It's passed 1 arguments:
 
-1. `croppedArea`: coordinates and dimensions of the cropped area in percentage of the media dimension
+1. `croppedArea`: coordinates and dimensions of the cropped area in percentage of the media dimension.
 
 croppedArea argument have the following shape:
 
@@ -87,4 +90,4 @@ MIT
 
 ## Maintainers
 
-This project is maintained by Catca.
+This project is maintained by catca.

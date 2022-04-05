@@ -1,4 +1,4 @@
-import { Area, Point, Size } from '@src/types';
+import { Area, getCroppedImgProps, Point, Size } from '@src/types';
 
 /**
  * Clamp value between min and max
@@ -86,11 +86,18 @@ export const createImage = (url: string) =>
  * @param {File} image - Image File url
  * @param {Object} pixelCrop - pixelCrop Object
  */
-export default async function getCroppedImg(imageSrc: string, pixelCrop: Area) {
+export default async function getCroppedImg({
+  imageSrc,
+  pixelCrop,
+  canvasSize = {
+    width: 1200,
+    height: 1200,
+  },
+}: getCroppedImgProps) {
   const image: any = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
-  const WIDTH = 1200;
-  const HEIGHT = 1200;
+  const WIDTH = canvasSize.width;
+  const HEIGHT = canvasSize.height;
   canvas.width = WIDTH;
   canvas.height = HEIGHT;
   const ctx = <CanvasRenderingContext2D>canvas.getContext('2d');

@@ -22,8 +22,9 @@ export type AreaProps = {
 
 export interface CropperProps {
   src: string;
-  width: number;
-  height: number;
+  width?: number;
+  height?: number;
+  aspect?: number;
   zoom?: number;
   minZoom?: number;
   maxZoom?: number;
@@ -35,4 +36,10 @@ export interface CropperProps {
     width: number;
     height: number;
   };
+}
+
+export interface getCroppedImgProps {
+  imageSrc: string;
+  pixelCrop: Area;
+  canvasSize?: Size;
 }
