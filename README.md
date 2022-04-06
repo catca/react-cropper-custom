@@ -9,11 +9,12 @@ A React component to crop images with interactions.
 Check out the examples:
 
 - [Basic example with hooks](https://codesandbox.io/s/react-cropper-custom-demo-tre3mh?file=/src/App.tsx)
+- [Responsive cropper example with hooks](https://codesandbox.io/s/react-cropper-custom-responsive-iil3rm)
 
 ## Features
 
 - Supports drag, zoom interactions.
-- The image is automatically enlarged to fit the area.
+- The image is automatically enlarged to fit the crop area.
 
 ## Installation
 
@@ -35,9 +36,9 @@ import { Cropper } from 'react-cropper-custom';
 const Demo = () => {
   const [zoom, setZoom] = useState(1);
 
-  const onCropComplete = useCallback((croppedArea) => {
+  const onCropComplete = (croppedArea) => {
     console.log(croppedArea);
-  }, []);
+  };
 
   return (
     <Cropper
@@ -45,8 +46,8 @@ const Demo = () => {
       width={WIDTH}
       height={HEIGHT}
       zoom={zoom}
-      onCropComplete={onCropComplete}
       onZoomChange={setZoom}
+      onCropComplete={onCropComplete}
     />
   );
 };
@@ -82,6 +83,49 @@ const croppedArea = {
   width: number, // width of the cropped area
   height: number, // height of the cropped area
 };
+```
+
+## Examples
+
+### responsive cropper
+
+```js
+import { Cropper, getCroppedImg } from 'react-cropper-custom';
+
+const Demo = () => {
+  const [img, setImg] = useState(yourImage);
+  const [aspect, setAspect] = useState(1);
+
+  const onCropComplete = async (croppedArea) => {
+    try {
+      const image = await getCroppedImg(yourImage, croppedArea, { width: 1200, height: 1200 * aspect });
+      setImg(image);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div className="wrapper">
+      <Cropper
+        src={yourImage}
+        aspect={aspect}
+        onCropComplete={onCropComplete}
+      />
+    <div>
+  );
+};
+```
+
+```css
+.wrapper {
+  width: 100%;
+  max-width: 540px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 ```
 
 ## License

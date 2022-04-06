@@ -37,9 +37,3 @@ export interface CropperProps {
     height: number;
   };
 }
-
-export interface getCroppedImgProps {
-  imageSrc: string;
-  pixelCrop: Area;
-  canvasSize?: Size;
-}
