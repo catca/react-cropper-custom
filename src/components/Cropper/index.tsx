@@ -38,6 +38,7 @@ const Cropper: FC<CropperProps> = ({
   const rafPinchTimeout = useRef<null | number>();
   const dragStartPosition = useRef<Point>({ x: 0, y: 0 });
   const lastPinchDistance = useRef<number>(0);
+  const onTouch = useRef<boolean>(false);
 
   useEffect(() => {
     if (imageSize.width === 0 || imageSize.height === 0) return;
@@ -71,7 +72,7 @@ const Cropper: FC<CropperProps> = ({
       let cropWidth = cropSize.width;
       let cropHeight = cropSize.height;
       let tempRatio;
-      let tempImageSize: Size;
+      let tempImageSize;
       if (width === 0 && height === 0) {
         cropWidth = containerRef.current!.offsetWidth;
         cropHeight = cropWidth * aspect;
@@ -81,15 +82,14 @@ const Cropper: FC<CropperProps> = ({
       if (imgRatio > cropRatio) {
         tempRatio = img.height / cropHeight;
         tempImageSize = { width: img.width / tempRatio, height: cropHeight };
-        setImageSize(tempImageSize);
-        setRatio(tempRatio);
       } else {
         tempRatio = img.width / cropWidth;
         tempImageSize = { width: cropWidth, height: img.height / tempRatio };
-        setImageSize(tempImageSize);
-        setRatio(tempRatio);
       }
+      setImageSize(tempImageSize);
+      setRatio(tempRatio);
       initialCroppedAreaFunction(tempImageSize, tempRatio);
+      imgResize();
     });
     img.src = src;
   };
@@ -101,16 +101,19 @@ const Cropper: FC<CropperProps> = ({
       const cropWidth = containerRef.current!.offsetWidth;
       const cropHeight = cropWidth * aspect;
       const cropRatio = cropWidth / cropHeight;
-      setCropSize({ width: cropWidth, height: cropHeight });
+      let tempImageSize;
+      let tempRatio;
       if (imgRatio > cropRatio) {
-        const tempRatio = imageSizeRef.current.height / cropHeight;
-        setImageSize({ width: imageSizeRef.current.width / tempRatio, height: cropHeight });
-        setRatio(tempRatio);
+        tempRatio = imageSizeRef.current.height / cropHeight;
+        tempImageSize = { width: imageSizeRef.current.width / tempRatio, height: cropHeight };
       } else {
-        const tempRatio = imageSizeRef.current.width / cropWidth;
-        setImageSize({ width: cropWidth, height: imageSizeRef.current.height / tempRatio });
-        setRatio(tempRatio);
+        tempRatio = imageSizeRef.current.width / cropWidth;
+        tempImageSize = { width: cropWidth, height: imageSizeRef.current.height / tempRatio };
       }
+      setCropSize({ width: cropWidth, height: cropHeight });
+      setImageSize(tempImageSize);
+      setRatio(tempRatio);
+      emitCropData(tempImageSize, { width: cropWidth, height: cropHeight }, tempRatio);
     }
   };
 
@@ -175,15 +178,18 @@ const Cropper: FC<CropperProps> = ({
     emitCropData();
     setOnEvent(false);
     setCrop(() => cropRef.current);
+    onTouch.current = false;
   };
 
-  const emitCropData = () => {
+  const emitCropData = (imageSizeProps = imageSize, cropSizeProps = cropSize, ratioProps = ratio) => {
     const cropX =
-      (((imageSize.width * zoomRef.current - cropSize.width) / 2 - cropRef.current.x) * ratio) / zoomRef.current;
+      (((imageSizeProps.width * zoomRef.current - cropSizeProps.width) / 2 - cropRef.current.x) * ratioProps) /
+      zoomRef.current;
     const cropY =
-      (((imageSize.height * zoomRef.current - cropSize.height) / 2 - cropRef.current.y) * ratio) / zoomRef.current;
-    const cropWidth = (cropSize.width * ratio) / zoomRef.current;
-    const cropHeight = (cropSize.height * ratio) / zoomRef.current;
+      (((imageSizeProps.height * zoomRef.current - cropSizeProps.height) / 2 - cropRef.current.y) * ratioProps) /
+      zoomRef.current;
+    const cropWidth = (cropSizeProps.width * ratioProps) / zoomRef.current;
+    const cropHeight = (cropSizeProps.height * ratioProps) / zoomRef.current;
     const emitCropSize = {
       x: cropX,
       y: cropY,
@@ -239,7 +245,7 @@ const Cropper: FC<CropperProps> = ({
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     document.addEventListener('touchmove', onTouchMove, { passive: false });
     document.addEventListener('touchend', onDragStopped);
-
+    onTouch.current = true;
     if (e.touches.length === 2) {
       onPinchStart(e);
     } else if (e.touches.length === 1) {
@@ -268,6 +274,7 @@ const Cropper: FC<CropperProps> = ({
 
     rafDragTimeout.current = window.requestAnimationFrame(() => {
       if (x === undefined || y === undefined) return;
+      if (!onTouch.current) return;
       const requestedPosition = {
         x: x - dragStartPosition.current.x,
         y: y - dragStartPosition.current.y,

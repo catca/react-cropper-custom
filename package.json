@@ -1,6 +1,6 @@
 {
   "name": "react-cropper-custom",
-  "version": "1.0.7",
+  "version": "1.1.0",
   "description": "A React component to crop images with interactions",
   "homepage": "https://catca.github.io/react-cropper-custom-demo",
   "repository": {
