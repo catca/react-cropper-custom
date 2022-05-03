@@ -1,39 +1,39 @@
 export type Size = {
-  width: number;
-  height: number;
+  readonly width: number;
+  readonly height: number;
 };
 
 export type Point = {
-  x: number;
-  y: number;
+  readonly x: number;
+  readonly y: number;
 };
 
 export type Area = {
-  width: number;
-  height: number;
-  x: number;
-  y: number;
+  readonly width: number;
+  readonly height: number;
+  readonly x: number;
+  readonly y: number;
 };
 
 export type AreaProps = {
-  x: number;
-  y: number;
+  readonly x: number;
+  readonly y: number;
 };
 
 export interface CropperProps {
-  src: string;
-  width?: number;
-  height?: number;
-  aspect?: number;
-  zoom?: number;
-  minZoom?: number;
-  maxZoom?: number;
-  onZoomChange?: (zoom: number) => void;
-  onCropComplete: (croppedArea: Area) => void;
-  initialCroppedArea?: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+  readonly src: string;
+  readonly width?: number;
+  readonly height?: number;
+  readonly aspect?: number;
+  readonly zoom?: number;
+  readonly minZoom?: number;
+  readonly maxZoom?: number;
+  readonly onZoomChange?: (zoom: number) => void;
+  readonly onCropComplete: (croppedArea: Area) => void;
+  readonly initialCroppedArea?: {
+    readonly x: number;
+    readonly y: number;
+    readonly width: number;
+    readonly height: number;
   };
 }

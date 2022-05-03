@@ -1,4 +1,4 @@
-import { Area, Point, Size } from '@src/types';
+import type { Area, Point, Size } from '@src/types';
 
 /**
  * Clamp value between min and max
@@ -7,7 +7,12 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-function restrictPositionCoord(position: number, imageSize: number, mediaSize: number, zoom: number): number {
+function restrictPositionCoord(
+  position: number,
+  imageSize: number,
+  mediaSize: number,
+  zoom: number,
+): number {
   const maxPosition = (mediaSize * zoom) / 2 - imageSize / 2;
 
   return clamp(position, -maxPosition, maxPosition);
@@ -16,24 +21,39 @@ function restrictPositionCoord(position: number, imageSize: number, mediaSize: n
 /**
  * Ensure a new media position stays in the crop area.
  */
-export function restrictPosition(position: Point, cropSize: Size, imageSize: Size, zoom: number): Point {
+export function restrictPosition(
+  position: Point,
+  cropSize: Size,
+  imageSize: Size,
+  zoom: number,
+): Point {
   return {
     x: restrictPositionCoord(position.x, cropSize.width, imageSize.width, zoom),
     y: restrictPositionCoord(position.y, cropSize.height, imageSize.height, zoom),
   };
 }
 
-function flexiblePositionCoord(position: number, imageSize: number, mediaSize: number, zoom: number): number {
+function flexiblePositionCoord(
+  position: number,
+  imageSize: number,
+  mediaSize: number,
+  zoom: number,
+): number {
   const maxPosition = (mediaSize * zoom) / 2 - imageSize / 2;
-  if (position > maxPosition) return maxPosition + Math.pow(position - maxPosition, 0.7);
-  if (position < -maxPosition) return -maxPosition - Math.pow(-(position + maxPosition), 0.7);
+  if (position > maxPosition) return maxPosition + (position - maxPosition) ** 0.7;
+  if (position < -maxPosition) return -maxPosition - (-(position + maxPosition)) ** 0.7;
   return position;
 }
 
 /**
  * Ensure a new flexible position stays in the crop area.
  */
-export function flexiblePosition(position: Point, cropSize: Size, imageSize: Size, zoom: number): Point {
+export function flexiblePosition(
+  position: Point,
+  cropSize: Size,
+  imageSize: Size,
+  zoom: number,
+): Point {
   return {
     x: flexiblePositionCoord(position.x, cropSize.width, imageSize.width, zoom),
     y: flexiblePositionCoord(position.y, cropSize.height, imageSize.height, zoom),
@@ -41,7 +61,9 @@ export function flexiblePosition(position: Point, cropSize: Size, imageSize: Siz
 }
 
 export function getDistanceBetweenPoints(pointA: Point, pointB: Point) {
-  return Math.sqrt((pointA.y - pointB.y) * (pointA.y - pointB.y) + (pointA.x - pointB.x) * (pointA.x - pointB.x));
+  return Math.sqrt(
+    (pointA.y - pointB.y) * (pointA.y - pointB.y) + (pointA.x - pointB.x) * (pointA.x - pointB.x),
+  );
 }
 
 /**
@@ -65,14 +87,18 @@ export function getInitialCropFromCroppedAreaPixels(
 ): { initialCrop: Point; initialZoom: number } {
   const initialZoom = (cropSize.width * ratio) / initialCroppedArea.width;
   let initialCrop = {
-    x: (imageSize.width * initialZoom - cropSize.width) / 2 - (initialZoom * initialCroppedArea.x) / ratio,
-    y: (imageSize.height * initialZoom - cropSize.height) / 2 - (initialZoom * initialCroppedArea.y) / ratio,
+    x:
+      (imageSize.width * initialZoom - cropSize.width) / 2 -
+      (initialZoom * initialCroppedArea.x) / ratio,
+    y:
+      (imageSize.height * initialZoom - cropSize.height) / 2 -
+      (initialZoom * initialCroppedArea.y) / ratio,
   };
   initialCrop = restrictPosition(initialCrop, cropSize, imageSize, initialZoom);
   return { initialCrop, initialZoom };
 }
 
-export const createImage = (url: string) =>
+export const createImage = async (url: string) =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
@@ -104,7 +130,17 @@ export default async function getCroppedImg(
 
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
-  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, WIDTH, HEIGHT);
+  ctx.drawImage(
+    image,
+    pixelCrop.x,
+    pixelCrop.y,
+    pixelCrop.width,
+    pixelCrop.height,
+    0,
+    0,
+    WIDTH,
+    HEIGHT,
+  );
 
   // As Base64 string
   return canvas.toDataURL('image/jpeg');

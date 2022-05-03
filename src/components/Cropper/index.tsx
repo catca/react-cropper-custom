@@ -1,7 +1,8 @@
-import React, { FC, useEffect, useRef, useState } from 'react';
+import type { FC } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
-import { CropperProps, Size, Point } from '@src/types';
+import type { CropperProps, Size, Point } from '@src/types';
 import {
   getInitialCropFromCroppedAreaPixels,
   restrictPosition,
@@ -23,20 +24,20 @@ const Cropper: FC<CropperProps> = ({
   onCropComplete,
   initialCroppedArea,
 }: CropperProps) => {
-  const [cropSize, setCropSize] = useState<Size>({ width: width, height: height });
+  const [cropSize, setCropSize] = useState<Size>({ width, height });
   const [imageSize, setImageSize] = useState<Size>({ width: 0, height: 0 });
   const [ratio, setRatio] = useState<number>(1);
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [onEvent, setOnEvent] = useState<boolean>(false);
   const [completeInitial, setCompleteInitial] = useState<boolean>(false);
-  const cropRef = useRef<Point>({ x: 0, y: 0 });
+  const cropRef = useRef({ x: 0, y: 0 });
   const zoomRef = useRef<number>(1);
-  const imageSizeRef = useRef<Size>({ width: 0, height: 0 });
+  const imageSizeRef = useRef({ width: 0, height: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLDivElement>(null);
   const rafDragTimeout = useRef<null | number>();
   const rafPinchTimeout = useRef<null | number>();
-  const dragStartPosition = useRef<Point>({ x: 0, y: 0 });
+  const dragStartPosition = useRef({ x: 0, y: 0 });
   const lastPinchDistance = useRef<number>(0);
   const onTouch = useRef<boolean>(false);
 
@@ -52,7 +53,7 @@ const Cropper: FC<CropperProps> = ({
 
   useEffect(() => {
     imgSizeInit();
-    return cleanEvents();
+    return void cleanEvents();
   }, [src]);
 
   useEffect(() => {
@@ -181,12 +182,18 @@ const Cropper: FC<CropperProps> = ({
     onTouch.current = false;
   };
 
-  const emitCropData = (imageSizeProps = imageSize, cropSizeProps = cropSize, ratioProps = ratio) => {
+  const emitCropData = (
+    imageSizeProps = imageSize,
+    cropSizeProps = cropSize,
+    ratioProps = ratio,
+  ) => {
     const cropX =
-      (((imageSizeProps.width * zoomRef.current - cropSizeProps.width) / 2 - cropRef.current.x) * ratioProps) /
+      (((imageSizeProps.width * zoomRef.current - cropSizeProps.width) / 2 - cropRef.current.x) *
+        ratioProps) /
       zoomRef.current;
     const cropY =
-      (((imageSizeProps.height * zoomRef.current - cropSizeProps.height) / 2 - cropRef.current.y) * ratioProps) /
+      (((imageSizeProps.height * zoomRef.current - cropSizeProps.height) / 2 - cropRef.current.y) *
+        ratioProps) /
       zoomRef.current;
     const cropWidth = (cropSizeProps.width * ratioProps) / zoomRef.current;
     const cropHeight = (cropSizeProps.height * ratioProps) / zoomRef.current;
@@ -199,7 +206,7 @@ const Cropper: FC<CropperProps> = ({
     onCropComplete(emitCropSize);
   };
 
-  const onMouseDown = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const onMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();
     setOnEvent(true);
     dragStartPosition.current.x = e.clientX - crop.x;
@@ -214,7 +221,12 @@ const Cropper: FC<CropperProps> = ({
       y: e.clientY - dragStartPosition.current.y,
     };
     const newPosition = restrictPosition(requestedPosition, cropSize, imageSize, zoomRef.current);
-    const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, imageSize, zoomRef.current);
+    const newFlexiblePosition = flexiblePosition(
+      requestedPosition,
+      cropSize,
+      imageSize,
+      zoomRef.current,
+    );
     setCrop(newFlexiblePosition);
     cropRef.current = newPosition;
   };
@@ -270,7 +282,7 @@ const Cropper: FC<CropperProps> = ({
   };
 
   const onDrag = ({ x, y }: Point) => {
-    if (rafDragTimeout.current) window.cancelAnimationFrame(rafDragTimeout.current);
+    if (rafDragTimeout.current != null) window.cancelAnimationFrame(rafDragTimeout.current);
 
     rafDragTimeout.current = window.requestAnimationFrame(() => {
       if (x === undefined || y === undefined) return;
@@ -281,7 +293,12 @@ const Cropper: FC<CropperProps> = ({
       };
 
       const newPosition = restrictPosition(requestedPosition, cropSize, imageSize, zoomRef.current);
-      const newFlexiblePosition = flexiblePosition(requestedPosition, cropSize, imageSize, zoomRef.current);
+      const newFlexiblePosition = flexiblePosition(
+        requestedPosition,
+        cropSize,
+        imageSize,
+        zoomRef.current,
+      );
       setCrop(newFlexiblePosition);
       cropRef.current = newPosition;
     });
@@ -301,7 +318,7 @@ const Cropper: FC<CropperProps> = ({
     const center = getCenter(pointA, pointB);
     onDrag(center);
 
-    if (rafPinchTimeout.current) window.cancelAnimationFrame(rafPinchTimeout.current);
+    if (rafPinchTimeout.current != null) window.cancelAnimationFrame(rafPinchTimeout.current);
     rafPinchTimeout.current = window.requestAnimationFrame(() => {
       const distance = getDistanceBetweenPoints(pointA, pointB);
       const newZoom = zoomRef.current * (distance / lastPinchDistance.current);
@@ -318,7 +335,9 @@ const Cropper: FC<CropperProps> = ({
       onTouchStart={(e) => onTouchStart(e)}
       onWheel={(e) => onWheel(e)}
       style={{
-        width: `${width === 0 ? (aspect > 1 ? `${100 / aspect}%` : '100%') : `${cropSize.width}px`}`,
+        width: `${
+          width === 0 ? (aspect > 1 ? `${100 / aspect}%` : '100%') : `${cropSize.width}px`
+        }`,
         height: `${cropSize.height === 0 ? '100%' : `${cropSize.height}px`}`,
         cursor: `${onEvent ? 'grabbing' : 'grab'}`,
       }}

@@ -1,3 +1,4 @@
+import React from 'react';
 import * as ReactDOM from 'react-dom';
 import Cropper from '@components/Cropper';
 import { restrictPosition } from '@utils/Utils';

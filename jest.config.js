@@ -1,8 +1,4 @@
-const { pathsToModuleNameMapper } = require('ts-jest/utils');
-const { compilerOptions } = require('./tsconfig');
-
 const SRC_PATH = '<rootDir>/src';
-const resolvedPath = pathsToModuleNameMapper(compilerOptions.paths, { prefix: '<rootDir>/' });
 
 module.exports = {
   preset: 'ts-jest',
@@ -23,9 +19,12 @@ module.exports = {
     '^.+\\.tsx?$': 'ts-jest',
   },
   moduleNameMapper: {
-    ...resolvedPath,
-    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      '<rootDir>/internals/mocks/fileMock.js',
-    '\\.(css|less|scss)$': '<rootDir>/mocks/styleMock.js',
+    '^@src(.*)$': '<rootDir>/src$1',
+    '^@components(.*)$': '<rootDir>/src/components$1',
+    '^@style(.*)$': '<rootDir>/src/style$1',
+    '^@hooks(.*)$': '<rootDir>/src/hooks$1',
+    '^@utils(.*)$': '<rootDir>/src/utils$1',
+    '\\.(css|scss)$': '<rootDir>/mocks/styleMock.js',
   },
+  testEnvironment: 'jsdom',
 };
