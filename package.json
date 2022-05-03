@@ -1,6 +1,6 @@
 {
   "name": "react-cropper-custom",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A React component to crop images with interactions",
   "homepage": "https://catca.github.io/react-cropper-custom-demo",
   "repository": {
@@ -14,10 +14,20 @@
     "image crop"
   ],
   "author": "catca",
-  "main": "./dist/index.cjs.js",
-  "module": "./dist/index.esm.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
   "license": "MIT",
-  "types": "./dist/index.d.ts",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test": "jest",
+    "coverage": "jest --coverage",
+    "build": "rollup -c",
+    "watch": "rollup -cw",
+    "format": "prettier --check ./src",
+    "format:fix": "prettier --write ./src",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint --fix ./src"
+  },
   "eslintIgnore": [
     "jest.config.js",
     ".eslintrc.js",
