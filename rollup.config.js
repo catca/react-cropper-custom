@@ -24,7 +24,19 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [peerDepsExternal(), resolve(), commonjs(), postcss(), typescript()],
+    plugins: [
+      peerDepsExternal(),
+      alias({
+        entries: [{ find: '@', replacement: path.resolve(__dirname, 'src') }],
+      }),
+      resolve(),
+      commonjs(),
+      postcss({
+        extract: true,
+        extract: 'index.css',
+      }),
+      typescript(),
+    ],
   },
   {
     input: 'src/index.ts',
@@ -35,7 +47,10 @@ export default [
       alias({
         entries: [{ find: '@', replacement: path.resolve(__dirname, 'src') }],
       }),
-      postcss(),
+      postcss({
+        extract: true,
+        extract: 'index.css',
+      }),
     ],
   },
 ];

@@ -4,6 +4,10 @@ A React component to crop images with interactions.
 
 <img alt="cropper" src="./public/cropper.gif" width="340" height="340"/>
 
+## language
+
+[Korean](https://github.com/catca/react-cropper-custom/blob/main/public/README.md)
+
 ## Demo
 
 Check out the examples:

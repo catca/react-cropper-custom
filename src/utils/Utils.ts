@@ -1,4 +1,4 @@
-import type { Area, Point, Size } from '@src/types';
+import type { Area, Point, Size } from '../types';
 
 /**
  * Clamp value between min and max

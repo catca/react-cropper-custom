@@ -2,7 +2,6 @@ import type { FC } from 'react';
 import React, { useEffect, useRef, useState } from 'react';
 import normalizeWheel from 'normalize-wheel';
 import './index.css';
-import type { CropperProps, Size, Point } from '@src/types';
 import {
   getInitialCropFromCroppedAreaPixels,
   restrictPosition,
@@ -10,7 +9,8 @@ import {
   clamp,
   getDistanceBetweenPoints,
   getCenter,
-} from '@utils/Utils';
+} from '../../utils/Utils';
+import type { CropperProps, Size, Point } from '../../types';
 
 const Cropper: FC<CropperProps> = ({
   src,
