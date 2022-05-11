@@ -36,6 +36,7 @@ npm install react-cropper-custom --save
 
 ```js
 import { Cropper } from 'react-cropper-custom';
+import "react-cropper-custom/dist/index.css";
 
 const Demo = () => {
   const [zoom, setZoom] = useState(1);
@@ -95,6 +96,7 @@ const croppedArea = {
 
 ```js
 import { Cropper, getCroppedImg } from 'react-cropper-custom';
+import "react-cropper-custom/dist/index.css";
 
 const Demo = () => {
   const [img, setImg] = useState(yourImage);
