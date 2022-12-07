@@ -14,6 +14,7 @@ Check out the examples:
 
 - [Basic example with hooks](https://codesandbox.io/s/react-cropper-custom-demo-tre3mh?file=/src/App.tsx)
 - [Responsive cropper example with hooks](https://codesandbox.io/s/react-cropper-custom-responsive-iil3rm)
+- [File upload example to responsive cropper with hooks](https://codesandbox.io/s/react-cropper-custom-img-upload-x5p7yi)
 
 ## Features
 
