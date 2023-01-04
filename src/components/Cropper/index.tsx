@@ -248,6 +248,8 @@ const Cropper: FC<CropperProps> = ({
 
   const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const point = getMousePoint(e);
+    point.x -= Number(containerRef.current?.getBoundingClientRect().left);
+    point.y -= Number(containerRef.current?.getBoundingClientRect().top);
     const { pixelY } = normalizeWheel(e);
     const newZoom = zoomRef.current - pixelY / 200;
     setNewZoom(newZoom, point);

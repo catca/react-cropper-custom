@@ -1,6 +1,6 @@
 {
   "name": "react-cropper-custom",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "description": "A React component to crop images with interactions",
   "homepage": "https://react-cropper-custom-demo.vercel.app/",
   "repository": {
